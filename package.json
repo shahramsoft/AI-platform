@@ -4,19 +4,33 @@
   "license": "MIT",
   "scripts": {},
   "private": true,
-  "dependencies": {},
   "devDependencies": {
+    "@eslint/js": "^9.8.0",
+    "@nx/esbuild": "23.0.2",
+    "@nx/eslint": "23.0.2",
+    "@nx/eslint-plugin": "23.0.2",
     "@nx/js": "23.0.1",
+    "@nx/node": "^23.0.2",
     "@swc-node/register": "1.11.1",
     "@swc/core": "1.15.8",
     "@swc/helpers": "0.5.18",
     "@types/node": "^24.0.0",
+    "esbuild": "^0.27.0",
+    "eslint": "^9.8.0",
+    "eslint-config-prettier": "^10.0.0",
     "nx": "23.0.1",
     "prettier": "^3.8.1",
     "tslib": "^2.3.0",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.40.0"
   },
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "@fastify/autoload": "~6.0.3",
+    "@fastify/sensible": "~6.0.2",
+    "fastify": "~5.2.1",
+    "fastify-plugin": "~5.0.1"
+  }
 }

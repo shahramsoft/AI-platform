@@ -1,0 +1,84 @@
+{
+  "name": "gateway",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "gateway/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "platform": "node",
+        "outputPath": "dist/gateway",
+        "format": ["cjs"],
+        "bundle": false,
+        "main": "gateway/src/main.ts",
+        "tsConfig": "gateway/tsconfig.app.json",
+        "assets": ["gateway/src/assets"],
+        "generatePackageJson": true,
+        "esbuildOptions": {
+          "sourcemap": true,
+          "outExtension": {
+            ".js": ".js"
+          }
+        }
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "esbuildOptions": {
+            "sourcemap": false,
+            "outExtension": {
+              ".js": ".js"
+            }
+          }
+        }
+      }
+    },
+    "prune-lockfile": {
+      "dependsOn": ["build"],
+      "cache": true,
+      "executor": "@nx/js:prune-lockfile",
+      "outputs": [
+        "{workspaceRoot}/dist/gateway/package.json",
+        "{workspaceRoot}/dist/gateway/pnpm-lock.yaml"
+      ],
+      "options": {
+        "buildTarget": "build"
+      }
+    },
+    "copy-workspace-modules": {
+      "dependsOn": ["build"],
+      "cache": true,
+      "outputs": ["{workspaceRoot}/dist/gateway/workspace_modules"],
+      "executor": "@nx/js:copy-workspace-modules",
+      "options": {
+        "buildTarget": "build"
+      }
+    },
+    "prune": {
+      "dependsOn": ["prune-lockfile", "copy-workspace-modules"],
+      "executor": "nx:noop"
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "gateway:build",
+        "runBuildTargetDependencies": false
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "gateway:build:development"
+        },
+        "production": {
+          "buildTarget": "gateway:build:production"
+        }
+      }
+    }
+  }
+}
