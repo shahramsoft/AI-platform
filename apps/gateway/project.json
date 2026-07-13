@@ -1,7 +1,7 @@
 {
   "name": "gateway",
   "$schema": "../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "gateway/src",
+  "sourceRoot": "apps/gateway/src",
   "projectType": "application",
   "tags": [],
   "targets": {
@@ -14,9 +14,9 @@
         "outputPath": "dist/gateway",
         "format": ["cjs"],
         "bundle": false,
-        "main": "gateway/src/main.ts",
-        "tsConfig": "gateway/tsconfig.app.json",
-        "assets": ["gateway/src/assets"],
+        "main": "apps/gateway/src/main.ts",
+        "tsConfig": "apps/gateway/tsconfig.app.json",
+        "assets": ["apps/gateway/src/assets"],
         "generatePackageJson": true,
         "esbuildOptions": {
           "sourcemap": true,

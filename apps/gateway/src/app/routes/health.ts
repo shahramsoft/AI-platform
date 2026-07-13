@@ -1,20 +1,7 @@
-export default async function (
-    fastify
-) {
+import { FastifyInstance } from 'fastify';
 
-    fastify.get(
-        "/health",
-        async () => {
-
-            return {
-
-                status: "ok",
-
-                version: "0.1"
-
-            };
-
-        }
-    );
-
+export default async function (fastify: FastifyInstance) {
+  fastify.get('/health', async () => {
+    return { status: 'ok', version: '0.1' };
+  });
 }
