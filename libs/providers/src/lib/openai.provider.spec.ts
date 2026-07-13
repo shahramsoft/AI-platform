@@ -44,6 +44,106 @@ describe('OpenAIProvider', () => {
     );
   });
 
+  it('sends tool definitions and parses stringified tool call arguments', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          choices: [
+            {
+              message: {
+                content: '',
+                tool_calls: [
+                  {
+                    id: 'call_1',
+                    function: {
+                      name: 'calculator',
+                      arguments: '{"expression":"2+2"}',
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+        { status: 200 }
+      )
+    );
+
+    const provider = new OpenAIProvider({ apiKey: 'sk-test' });
+    const result = await provider.chat({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: 'what is 2+2?' }],
+      tools: [
+        {
+          name: 'calculator',
+          description: 'Evaluates arithmetic',
+          parameters: { type: 'object', properties: {} },
+        },
+      ],
+    });
+
+    expect(result).toEqual({
+      content: '',
+      toolCalls: [
+        { id: 'call_1', name: 'calculator', arguments: { expression: '2+2' } },
+      ],
+    });
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.tools[0].function.name).toBe('calculator');
+  });
+
+  it('sends the tool_call_id on tool result messages', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({ choices: [{ message: { content: 'done' } }] }),
+        { status: 200 }
+      )
+    );
+
+    const provider = new OpenAIProvider({ apiKey: 'sk-test' });
+    await provider.chat({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'user', content: 'what is 2+2?' },
+        {
+          role: 'assistant',
+          content: '',
+          toolCalls: [
+            { id: 'call_1', name: 'calculator', arguments: { expression: '2+2' } },
+          ],
+        },
+        {
+          role: 'tool',
+          content: '4',
+          toolCalls: [{ id: 'call_1', name: 'calculator', arguments: {} }],
+        },
+      ],
+    });
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.messages[1].tool_calls[0].function.arguments).toBe(
+      '{"expression":"2+2"}'
+    );
+    expect(body.messages[2].tool_call_id).toBe('call_1');
+  });
+
+  it('embeds text via /embeddings', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ data: [{ embedding: [0.1, 0.2] }] }), {
+        status: 200,
+      })
+    );
+
+    const provider = new OpenAIProvider({ apiKey: 'sk-test' });
+    const result = await provider.embed({
+      model: 'text-embedding-3-small',
+      input: ['hello world'],
+    });
+
+    expect(result).toEqual({ embeddings: [[0.1, 0.2]] });
+  });
+
   it('throws ProviderRequestError on a non-ok response', async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 401 }));
 

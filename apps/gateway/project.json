@@ -18,6 +18,8 @@
         "tsConfig": "apps/gateway/tsconfig.app.json",
         "assets": ["apps/gateway/src/assets"],
         "generatePackageJson": true,
+        "declaration": false,
+        "skipTypeCheck": true,
         "esbuildOptions": {
           "sourcemap": true,
           "outExtension": {

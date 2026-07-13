@@ -1,0 +1,19 @@
+{
+  "name": "memory",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/memory/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/memory",
+        "main": "libs/memory/src/index.ts",
+        "tsConfig": "libs/memory/tsconfig.lib.json",
+        "assets": ["libs/memory/*.md"]
+      }
+    }
+  }
+}

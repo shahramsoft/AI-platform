@@ -20,7 +20,12 @@
     "paths": {
       "@org/ai-core": ["./libs/ai-core/src/index.ts"],
       "@org/providers": ["./libs/providers/src/index.ts"],
-      "@org/shared": ["./libs/shared/src/index.ts"]
+      "@org/shared": ["./libs/shared/src/index.ts"],
+      "@org/memory": ["./libs/memory/src/index.ts"],
+      "@org/chat": ["./libs/chat/src/index.ts"],
+      "@org/rag": ["./libs/rag/src/index.ts"],
+      "@org/tools": ["./libs/tools/src/index.ts"],
+      "@org/agents": ["./libs/agents/src/index.ts"]
     }
   }
 }

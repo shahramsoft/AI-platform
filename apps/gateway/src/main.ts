@@ -1,12 +1,21 @@
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import Fastify from 'fastify';
 import { app } from './app/app';
 
-const host = process.env.HOST ?? 'localhost';
-const port = process.env.PORT ? Number(process.env.PORT) : 3000;
+const envPath = resolve(process.cwd(), '.env');
+if (existsSync(envPath)) {
+  process.loadEnvFile(envPath);
+}
+
+const host = process.env['HOST'] ?? 'localhost';
+const port = process.env['PORT'] ? Number(process.env['PORT']) : 3000;
 
 // Instantiate Fastify with some config
 const server = Fastify({
-  logger: true,
+  logger: {
+    redact: ['req.headers["x-api-key"]', 'req.headers.authorization'],
+  },
 });
 
 // Register your application as a normal plugin.

@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc/cli",
+    "module": "commonjs",
+    "moduleResolution": "bundler",
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts"],
+  "references": [
+    {
+      "path": "../../libs/providers/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/memory/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/chat/tsconfig.lib.json"
+    }
+  ]
+}

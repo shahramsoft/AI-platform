@@ -6,7 +6,7 @@ Version: 1.0
 
 Status: Living document — update as tasks complete
 
-Last updated: 2026-07-13
+Last updated: 2026-07-13 (sections 3-4 completed)
 
 ---
 
@@ -47,6 +47,24 @@ across `ai-core`, `providers`, `shared`, and `gateway`:
 - [x] Ran `nx sync` to add the missing TS project reference from `providers` to `ai-core`.
 
 **Verification:** `pnpm nx run-many -t typecheck,build,test,lint --projects=ai-core,providers,shared,gateway` passes clean.
+
+## Two more baseline bugs found while wiring the Gateway (2026-07-13)
+
+- [x] `@nx/esbuild:esbuild`'s build target runs its own internal type-check pass by
+      default (`skipTypeCheck: false`), separate from the dedicated `typecheck` Nx target.
+      As soon as `apps/gateway` had its first cross-lib imports (the chat/agent plugins),
+      this internal pass broke with `TS6307` errors that the real `tsc --build` (the
+      `typecheck` target) does **not** produce — confirmed by running `tsc --build` directly
+      with zero errors. Root cause: `@nx/esbuild`'s `normalizeOptions` forces
+      `skipTypeCheck: false` whenever it detects `declaration: true` OR `composite: true`
+      in the resolved tsconfig (`tsConfig.options.composite` is `true` here via
+      `tsconfig.base.json`), regardless of what you pass in. Fixed by explicitly setting
+      both `"declaration": false` and `"skipTypeCheck": true` in `gateway`'s (and `cli`'s)
+      build options — the dedicated `typecheck` target still catches real type errors.
+- [x] Every app's `tsconfig.app.json` had `outDir: "../../dist/out-tsc"` (unnamespaced),
+      the same collision class as the libs bug above but one level up — once two apps
+      both have a `src/main.ts`, their declaration outputs would collide. Fixed by
+      namespacing to `../../dist/out-tsc/<app-name>` for both `gateway` and `cli`.
 
 ## Known repo quirk (not a bug, just worth knowing)
 
@@ -110,41 +128,126 @@ Implements `01-system-architecture.md` § Provider Architecture / Provider Facto
       `listModels()`, `health()`, and `chat()` all work — got a real reply from `qwen3:8b`.
 - [ ] OpenAI path has **not** been smoke-tested against a real API key (none provided yet) —
       only unit-tested with mocked `fetch`. Do this once you have a key you want to use.
+- [x] **Tool-calling support added to the domain model** (2026-07-13): `ChatMessage` gained
+      `toolCalls`, `ChatRequest` gained `tools`, `ChatResponse` gained `toolCalls`. Both
+      providers map to/from the real wire formats — verified by hand against the actual
+      Ollama API via `curl` first (Ollama returns `tool_calls[].function.arguments` as a
+      real object; OpenAI returns it as a **JSON-encoded string** that must be parsed).
+      `embed()` was also added to `AIProvider` (used by RAG below) and live-verified against
+      `nomic-embed-text:latest` (768-dim vectors).
 
 ---
 
-# 3. Next: Complete the Vertical Slice
+# 3. Vertical Slice — Done 2026-07-13
 
-Goal: a real chat request flows `Client → Gateway route → Application service →
-ProviderFactory → Provider → model → response`, per the layering in
-`01-system-architecture.md`.
+Goal achieved: `Client → Gateway route → Application service → ProviderFactory → Provider →
+model → response`, per the layering in `01-system-architecture.md`.
 
-- [ ] `ChatService` (Application layer) — orchestrates a chat request using the
-      `AIProvider` returned by `ProviderFactory`; this is where request validation
-      (Zod) and any future memory/RAG injection will hook in
-- [ ] `POST /chat` route in `apps/gateway` (Presentation layer) — validates input,
-      delegates to `ChatService`, streams or returns the response; no business logic
-      in the route itself
-- [ ] Wire `apps/gateway/src/main.ts` to load `.env` (`process.loadEnvFile()`, Node 22
-      native) so `ProviderFactory.fromEnv()` picks up real config when the gateway runs
-- [ ] End-to-end manual test: `curl` the running gateway and get a real model reply
+- [x] `ChatService` (`libs/chat`, Application layer) — appends the user message to
+      `ConversationMemory`, sends the full history to the `AIProvider`, appends the reply,
+      returns it. Unit-tested (4 tests) with a fake in-memory provider.
+- [x] `POST /chat` route in `apps/gateway` — Zod-validated (`conversationId`, `message`,
+      optional `model`), delegates to `fastify.chatService` (decorated by a plugin, not
+      constructed in the route — keeps the route free of business/provider logic per
+      `01-system-architecture.md`).
+- [x] `apps/gateway/src/main.ts` loads `.env` via Node 22's native `process.loadEnvFile()`
+      (guarded with `existsSync` so it doesn't crash when `.env` is absent, e.g. in CI).
+- [x] **End-to-end verified against the real Gateway process** (`node dist/gateway/main.js`
+      + `curl`): first turn replied "pong"; a follow-up turn in the same `conversationId`
+      correctly recalled it — proving `ConversationMemory` actually persists context across
+      requests, not just within a single call.
+- [x] Input validation verified (empty `conversationId`/`message` → `400` with Zod's
+      `fieldErrors`), and malformed JSON bodies are caught by a global error handler
+      (see section 4 Observability) rather than crashing the process.
 
 ---
 
-# 4. Future Roadmap (per `00-product-specification.md` module list)
+# 4. Platform Modules — Done 2026-07-13
 
-Rough dependency order — each builds on the vertical slice above:
+All items below were built as real, working v1 increments (not full production-spec
+versions — see the "Honest scope notes" under each) and verified against the actual Ollama
+server, not just with mocks.
 
-- [ ] **Memory** — conversation history, short/long-term memory (needed before RAG and
-      Agent Runtime are useful)
-- [ ] **RAG** — chunking, embeddings (you already have `nomic-embed-text` loaded and
-      reachable), vector store, retrieval, context injection
-- [ ] **Agent Runtime** — orchestrator + agent lifecycle per
-      `05-agent-runtime-and-orchestration.md`; depends on Memory + Tool Runtime existing
-- [ ] **Tool Runtime** — sandboxed tool execution (filesystem, git, docker, Azure DevOps, ...)
-- [ ] **Observability** — structured logging (Pino), tracing, token usage / cost tracking
-- [ ] **Auth** — API keys / JWT for the Gateway
-- [ ] **CLI** (`apps/cli`) — currently just a `.gitkeep`
+## Memory (`libs/memory`)
+- [x] `ConversationMemory` — in-memory, keyed by `conversationId`, trims to the last N
+      messages (default 50). 6 unit tests.
+- **Honest scope note:** in-memory only — restarting the gateway loses all history.
+  `01-system-architecture.md` lists PostgreSQL/MongoDB/Redis as future backends; that's not
+  done. There's no `MemoryProvider` abstraction yet, just the one concrete class.
+
+## RAG (`libs/rag`)
+- [x] `chunkText()` — character-based chunking with configurable size/overlap.
+- [x] `InMemoryVectorStore` — cosine-similarity search, no external vector DB.
+- [x] `RagService` — indexes a document (chunk → embed → store) and retrieves the top-K
+      most relevant chunks for a query (embed query → cosine search).
+- [x] **Live-verified with real embeddings**: indexed three sentences via
+      `nomic-embed-text:latest`, asked "what framework does the gateway use?", got back the
+      correct chunk ("...uses Fastify for its gateway...") with a real cosine score.
+- **Honest scope note:** not wired into the `/chat` route yet (no retrieval-augmented chat
+  endpoint) and no document-ingestion route in the Gateway — it's a working library, not yet
+  a Gateway-exposed feature. `libs/vector-store` as its own package (per
+  `02-folder-structure.md`) wasn't split out; the store lives inside `libs/rag`.
+
+## Tools (`libs/tools`)
+- [x] `Tool` interface (`name`, `description`, `parameters` JSON schema, `execute()`) +
+      `ToolRuntime` (register/list/execute, converts thrown errors into failed `ToolResult`s
+      instead of crashing the caller).
+- [x] Two real tools: `CalculatorTool` (arithmetic via a hand-written recursive-descent
+      parser — no `eval`/`Function`, so no code-injection surface) and `CurrentTimeTool`.
+- **Honest scope note:** none of the higher-value tools from `01-system-architecture.md`
+  (Filesystem, Git, Docker, PostgreSQL, Azure DevOps, ...) exist yet — this is the runtime
+  and pattern, with two safe example tools proving it end-to-end.
+
+## Agent Runtime (`libs/agents`)
+- [x] `AgentRuntime.run(model, goal)` — single-agent tool-calling loop: sends the goal +
+      advertised tool definitions to the provider; if the model requests a tool call,
+      executes it via `ToolRuntime` and feeds the result back as a `tool`-role message;
+      repeats until the model returns a plain answer or `maxIterations` is hit
+      (`AgentIterationLimitError`).
+- [x] **Live-verified twice against real `qwen3:8b` tool-calling**: "(17 * 23) + 5" → the
+      model called `calculator` with `"(17 * 23) + 5"` and correctly reported 396; "what
+      time is it" → correctly called `current-time` and reported the real ISO timestamp.
+- [x] `POST /agent` route in `apps/gateway`, same pattern as `/chat` (Zod validation,
+      `fastify.agentRuntime` decorator, no business logic in the route).
+- **Honest scope note:** single agent only — no multi-agent orchestration, no planner/
+  specialized agents (`PlannerAgent`, `CodingAgent`, etc. from `01-system-architecture.md`),
+  no persisted execution state/history (`05-agent-runtime-and-orchestration.md`'s
+  `executionId`/state-tracking JSON isn't implemented). This is the execution loop, not the
+  orchestrator.
+
+## Observability
+- [x] Fastify's built-in Pino logger was already structured (request id, method, url,
+      status, response time) — confirmed via real request logs.
+- [x] Added header redaction (`x-api-key`, `authorization`) so secrets never hit the logs.
+- [x] Added a global error handler (`setErrorHandler`) — logs the full error server-side,
+      but only ever returns a generic "Internal Server Error" to the client for 5xx (no
+      stack traces leaked), verified by sending a malformed JSON body and inspecting both
+      the HTTP response and the log line.
+- **Honest scope note:** no tracing, no token-usage/cost tracking, no metrics endpoint —
+  just logging and safe error responses.
+
+## Auth
+- [x] Simple API-key check (`GATEWAY_API_KEY` env var, `x-api-key` header) as a Fastify
+      `onRequest` hook, skipping `/health`. If the env var is unset, the gateway logs a
+      warning and allows all requests (dev-friendly default — confirmed in the smoke-test
+      logs: `"GATEWAY_API_KEY is not set; all gateway requests are unauthenticated."`).
+- **Honest scope note:** no RBAC, SSO, or OIDC (all listed as "Future" in
+  `01-system-architecture.md` anyway) — single shared API key only.
+
+## CLI (`apps/cli`)
+- [x] Scaffolded as a real Nx app (it was previously just `.gitkeep`).
+- [x] `ai chat <message> [--conversation <id>] [--model <name>]` and `ai models` — both
+      **live-verified**: `models` printed the three real Ollama models; `chat "..."` got a
+      real "pong" back.
+- **Honest scope note:** each CLI invocation is a fresh process with its own
+  `ConversationMemory`, so `--conversation` only gives continuity within a single shell
+  session that reuses the same process — it does **not** persist across separate `ai chat`
+  invocations. No `ai doctor` / `ai memory` / `ai index` commands yet (per
+  `02-folder-structure.md`'s example list).
+
+**Full verification:** `pnpm nx run-many -t typecheck,build,test,lint` passes clean across
+all 10 projects (`ai-core`, `providers`, `shared`, `memory`, `chat`, `rag`, `tools`,
+`agents`, `gateway`, `cli`).
 
 ---
 
@@ -152,9 +255,10 @@ Rough dependency order — each builds on the vertical slice above:
 
 1. When you get an OpenAI API key, want me to run the live smoke test the same way I did
    for Ollama?
-2. Priority for section 3 (vertical slice) vs jumping straight to Memory/RAG — my
-   recommendation is still finishing the vertical slice first so every later module has a
-   working request path to hang off of.
+2. RAG isn't wired into `/chat` yet (no retrieval-augmented chat) — want that next, or
+   prioritize something else (Memory persistence, more tools, multi-agent orchestration)?
+3. `GATEWAY_API_KEY` is currently unset (auth disabled) — want me to set one in `.env` now
+   that the auth check exists, or leave it open for local development?
 
 ---
 

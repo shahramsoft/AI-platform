@@ -7,6 +7,9 @@
       "path": "./apps/gateway"
     },
     {
+      "path": "./apps/cli"
+    },
+    {
       "path": "./libs/providers"
     },
     {
@@ -14,6 +17,21 @@
     },
     {
       "path": "./libs/shared"
+    },
+    {
+      "path": "./libs/memory"
+    },
+    {
+      "path": "./libs/chat"
+    },
+    {
+      "path": "./libs/rag"
+    },
+    {
+      "path": "./libs/tools"
+    },
+    {
+      "path": "./libs/agents"
     }
   ]
 }
