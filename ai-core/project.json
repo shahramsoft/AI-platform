@@ -1,0 +1,19 @@
+{
+  "name": "ai-core",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "ai-core/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/ai-core",
+        "main": "ai-core/src/index.ts",
+        "tsConfig": "ai-core/tsconfig.lib.json",
+        "assets": ["ai-core/*.md"]
+      }
+    }
+  }
+}

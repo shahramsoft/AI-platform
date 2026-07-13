@@ -16,6 +16,11 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "es2022",
-    "customConditions": ["@org/source"]
+    "customConditions": ["@org/source"],
+    "paths": {
+      "@org/ai-core": ["./ai-core/src/index.ts"],
+      "@org/providers": ["./providers/src/index.ts"],
+      "@org/shared": ["./shared/src/index.ts"]
+    }
   }
 }
