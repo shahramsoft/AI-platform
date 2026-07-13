@@ -25,7 +25,8 @@
     "typescript-eslint": "^8.40.0"
   },
   "workspaces": [
-    "packages/*"
+    "apps/*",
+    "libs/*"
   ],
   "dependencies": {
     "@fastify/autoload": "~6.0.3",
