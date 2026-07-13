@@ -1,8 +1,7 @@
 import {
     ChatRequest,
     ChatResponse
-} from "../../core/src/types/chat";
-//"@aspedan/core";
+} from "@aspedan-ai-platform/ai-core";
 
 export interface AIProvider {
 
@@ -14,5 +13,3 @@ export interface AIProvider {
 
     health(): Promise<boolean>;
 }
-
-export { ChatRequest, ChatResponse };
