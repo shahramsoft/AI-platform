@@ -10,9 +10,17 @@ declare module 'fastify' {
   }
 }
 
-export default fp(async function (fastify: FastifyInstance) {
-  const provider = ProviderFactory.fromEnv();
-  const memory = new ConversationMemory();
+export default fp(
+  async function (fastify: FastifyInstance) {
+    const provider = ProviderFactory.fromEnv();
+    const memory = new ConversationMemory();
+    const embeddingModel =
+      process.env['RAG_EMBEDDING_MODEL'] ?? 'nomic-embed-text:latest';
 
-  fastify.decorate('chatService', new ChatService(provider, memory));
-});
+    fastify.decorate(
+      'chatService',
+      new ChatService(provider, memory, fastify.ragService, embeddingModel)
+    );
+  },
+  { name: 'chat-service', dependencies: ['rag-service'] }
+);

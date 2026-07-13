@@ -5,6 +5,7 @@ const chatRequestSchema = z.object({
   conversationId: z.string().min(1),
   message: z.string().min(1),
   model: z.string().optional(),
+  ragEnabled: z.boolean().optional(),
 });
 
 export default async function (fastify: FastifyInstance) {
@@ -18,7 +19,7 @@ export default async function (fastify: FastifyInstance) {
       });
     }
 
-    const { conversationId, message, model } = parseResult.data;
+    const { conversationId, message, model, ragEnabled } = parseResult.data;
     const defaultModel = process.env['OLLAMA_DEFAULT_MODEL'] ?? 'qwen3:8b';
 
     try {
@@ -26,6 +27,7 @@ export default async function (fastify: FastifyInstance) {
         conversationId,
         model: model ?? defaultModel,
         message,
+        useRag: ragEnabled ?? false,
       });
       return reply.send(result);
     } catch (error) {
