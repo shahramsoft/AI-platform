@@ -18,9 +18,9 @@
     "target": "es2022",
     "customConditions": ["@org/source"],
     "paths": {
-      "@org/ai-core": ["./ai-core/src/index.ts"],
-      "@org/providers": ["./providers/src/index.ts"],
-      "@org/shared": ["./shared/src/index.ts"]
+      "@org/ai-core": ["./libs/ai-core/src/index.ts"],
+      "@org/providers": ["./libs/providers/src/index.ts"],
+      "@org/shared": ["./libs/shared/src/index.ts"]
     }
   }
 }

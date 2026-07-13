@@ -1,7 +1,7 @@
 {
   "name": "shared",
-  "$schema": "../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "shared/src",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/src",
   "projectType": "library",
   "targets": {
     "build": {
@@ -9,9 +9,9 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/shared",
-        "main": "shared/src/index.ts",
-        "tsConfig": "shared/tsconfig.lib.json",
-        "assets": ["shared/*.md"]
+        "main": "libs/shared/src/index.ts",
+        "tsConfig": "libs/shared/tsconfig.lib.json",
+        "assets": ["libs/shared/*.md"]
       }
     }
   },

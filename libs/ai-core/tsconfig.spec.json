@@ -1,7 +1,12 @@
 {
   "extends": "./tsconfig.json",
+  "references": [
+    {
+      "path": "./tsconfig.lib.json"
+    }
+  ],
   "compilerOptions": {
-    "outDir": "../dist/out-tsc",
+    "outDir": "../../dist/out-tsc/ai-core",
     "types": [
       "vitest/globals",
       "vitest/importMeta",

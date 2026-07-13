@@ -1,7 +1,7 @@
 {
   "name": "ai-core",
-  "$schema": "../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "ai-core/src",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/ai-core/src",
   "projectType": "library",
   "tags": [],
   "targets": {
@@ -10,9 +10,9 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/ai-core",
-        "main": "ai-core/src/index.ts",
-        "tsConfig": "ai-core/tsconfig.lib.json",
-        "assets": ["ai-core/*.md"]
+        "main": "libs/ai-core/src/index.ts",
+        "tsConfig": "libs/ai-core/tsconfig.lib.json",
+        "assets": ["libs/ai-core/*.md"]
       }
     }
   }

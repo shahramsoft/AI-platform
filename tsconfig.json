@@ -7,13 +7,13 @@
       "path": "./apps/gateway"
     },
     {
-      "path": "./providers"
+      "path": "./libs/providers"
     },
     {
-      "path": "./ai-core"
+      "path": "./libs/ai-core"
     },
     {
-      "path": "./shared"
+      "path": "./libs/shared"
     }
   ]
 }

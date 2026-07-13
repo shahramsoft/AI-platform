@@ -1,7 +1,7 @@
 {
   "name": "providers",
-  "$schema": "../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "providers/src",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/providers/src",
   "projectType": "library",
   "targets": {
     "build": {
@@ -9,9 +9,9 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/providers",
-        "main": "providers/src/index.ts",
-        "tsConfig": "providers/tsconfig.lib.json",
-        "assets": ["providers/*.md"]
+        "main": "libs/providers/src/index.ts",
+        "tsConfig": "libs/providers/tsconfig.lib.json",
+        "assets": ["libs/providers/*.md"]
       }
     }
   },
