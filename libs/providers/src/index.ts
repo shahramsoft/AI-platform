@@ -1,3 +1,1 @@
-export * from "./provider";
-
-export * from "./ollama";
+export * from './lib/providers';
